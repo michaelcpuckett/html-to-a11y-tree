@@ -1,0 +1,17 @@
+export const ariaRolesWithPresentationalChildren = [
+  "button",
+  "checkbox",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "meter",
+  "option",
+  "radio",
+  "switch",
+  "tab",
+  "treeitem",
+  "scrollbar",
+  "separator",
+  "slider",
+  "progressbar",
+];

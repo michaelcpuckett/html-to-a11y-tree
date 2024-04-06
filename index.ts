@@ -8,6 +8,9 @@ import type {
   Text as ParserText,
 } from "html-dom-parser";
 import { ariaToHtmlMapping } from "./ariaToHtmlMapping";
+import { ariaRolesWithPhrasingDescendants } from "./ariaRolesWithPhrasingDescendants";
+import { ariaRolesWithPresentationalChildren } from "./ariaRolesWithPresentationalChildren";
+import { ariaRolesWithoutAriaLabelSupport } from "./ariaRolesWithoutAriaLabelSupport";
 
 const specialAttributes = ["type", "scope", "multiple"];
 
@@ -44,6 +47,7 @@ interface IAccElement {
   children: IAccNode[];
   tagName: string;
   role: string;
+  accName: string;
   type: "AccElement";
 }
 
@@ -63,6 +67,7 @@ class AccElement implements IAccElement {
   attributes: Record<string, string>;
   children: IAccNode[];
   tagName: string;
+  accName: string;
   role: string;
   type: "AccElement";
 
@@ -76,6 +81,7 @@ class AccElement implements IAccElement {
     this.children = children;
     this.type = "AccElement";
     this.role = this.getRoleFromTagName();
+    this.accName = this.getAccessibleName();
   }
 
   getRoleFromString(tagName: string): string | undefined {
@@ -117,6 +123,45 @@ class AccElement implements IAccElement {
 
     return "generic";
   }
+
+  getAccessibleName(): string {
+    if (!ariaRolesWithoutAriaLabelSupport.includes(this.role)) {
+      const label = this.attributes["aria-label"];
+
+      if (label) {
+        return label;
+      }
+
+      const labelledBy = this.attributes["aria-labelledby"];
+
+      // TODO. Implement aria-labelledby support by looking up the text of the
+      // element with the ID
+    }
+
+    if (ariaRolesWithPresentationalChildren.includes(this.role)) {
+      const innerText = this.children
+        .map(this.getChildTextNodes)
+        .flat()
+        .map((child) => child.data)
+        .join(" ");
+
+      return innerText;
+    }
+
+    return "";
+  }
+
+  getChildTextNodes = (node: IAccNode): IAccText[] => {
+    if (guardIsAccText(node)) {
+      return [node];
+    }
+
+    if (guardIsAccElement(node)) {
+      return node.children.map(this.getChildTextNodes).flat();
+    }
+
+    throw new Error("Unknown node type");
+  };
 }
 
 class AccText implements IAccText {
@@ -233,7 +278,27 @@ const accDocument = parsedDocument
 const filteredAccDocument =
   filterOutEmptyRoleNodesFromTree(accDocument).filter(guardIsAccElement);
 
+function render(node: IAccNode, level = 0): string {
+  const indent = (level: number) => "  ".repeat(level);
+
+  if (guardIsAccElement(node)) {
+    return (
+      `${indent(level)}[${node.role}${
+        node.accName ? `: ${node.accName}` : ""
+      }]` +
+      "\n" +
+      node.children.map((child) => render(child, level + 1)).join("\n")
+    );
+  }
+
+  if (guardIsAccText(node)) {
+    return `${indent(level)}"${node.data}"`;
+  }
+
+  throw new Error("Unknown node type");
+}
+
 fs.writeFileSync(
   `${passedHtmlFileName}.acc.json`,
-  JSON.stringify(filteredAccDocument, null, 2)
+  filteredAccDocument.map(render).join("\n")
 );
