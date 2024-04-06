@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Michael Puckett - UX Engineer</title>
+    <meta
+      name="description"
+      content="Creative technologist with extensive experience building for the web platform. Focused on crafting accessible, user-friendly digital products and tools."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.json" />
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :root {
+        font-size: 20px;
+        font: -apple-system-body;
+        font-family: system-ui, sans-serif;
+        line-height: 1.45;
+
+        color-scheme: light;
+        --swatch-text: CanvasText;
+        --swatch-background: #f0f1f5;
+        --swatch-gray: #636363;
+        --swatch-interactive: LinkText;
+        --swatch-interactive-completed: VisitedText;
+        --swatch-focused: Highlight;
+        --swatch-button-text: CanvasText;
+        --swatch-page: #202024;
+        --swatch-button-face: #e0e0e3;
+        --gap: 2rem;
+      }
+
+      @media print {
+        :root {
+          font-size: 14px;
+          color-scheme: light;
+          --swatch-page: Canvas;
+          --swatch-background: Canvas;
+        }
+
+        @page {
+          size: letter portrait;
+          margin: 0.5in;
+        }
+      }
+
+      @media screen and (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --swatch-page: #001117;
+          /* Text contrast: 17:1 */
+          /* Link contrast: 8:1 */
+          /* Gray contrast: 8:1 */
+          --swatch-background: #001e27;
+          /* Text contrast: 14:1 */
+          /* Link contrast: 6:1 */
+          /* Gray contrast: 7:1 */
+          --swatch-button-face: #003c55;
+          --swatch-gray: #aebbc1;
+          --swatch-interactive: #78ddff;
+          --swatch-focused: CanvasText;
+          --swatch-interactive-completed: #dfc0f3;
+        }
+      }
+
+      @media print, screen and (forced-colors: active) {
+        :root {
+          --swatch-page: Canvas;
+          --swatch-gray: CanvasText;
+          --swatch-background: transparent;
+          --swatch-button-face: transparent;
+        }
+      }
+
+      :focus {
+        outline: 0;
+      }
+
+      :focus-visible {
+        outline: 4px solid var(--swatch-focused);
+        outline-offset: 4px;
+      }
+
+      body {
+        background: var(--swatch-page);
+        color: var(--swatch-text);
+        margin: 0;
+        overflow-x: hidden;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-hyphens: auto;
+        hyphens: auto;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .nav,
+      .nav-region {
+        display: flex;
+        flex-wrap: wrap;
+        gap: max(24px, 1rem);
+        justify-content: space-between;
+        font-size: 0.95rem;
+
+        @media screen and (max-width: 320px) {
+          font-size: 0.875rem;
+          gap: 0.5rem;
+        }
+      }
+
+      @media print {
+        .nav {
+          display: none;
+        }
+      }
+
+      header {
+        display: grid;
+        gap: var(--gap);
+      }
+
+      @media print, screen and (forced-colors: active) {
+        header {
+          border-bottom: 0.5rem double currentColor;
+          padding-bottom: var(--gap);
+        }
+      }
+
+      header:has(img) {
+        width: 100%;
+        gap: 1rem;
+        grid-auto-flow: column;
+        justify-content: space-between;
+        align-items: center;
+        grid-template-columns: auto auto;
+        grid-template-rows: max-content;
+      }
+
+      @media (max-width: 959px) {
+        header:has(img) {
+          grid-auto-flow: row;
+          justify-content: center;
+          text-align: center;
+          grid-template-rows: auto;
+          grid-template-columns: 100%;
+        }
+      }
+
+      header img {
+        width: 100%;
+        justify-self: center;
+        height: auto;
+        max-width: min(180px, 50%);
+        aspect-ratio: 1;
+        box-shadow: 0 0 3px 3px black;
+        border: 4px solid white;
+      }
+
+      @media (min-width: 960px) {
+        header img {
+          justify-self: flex-end;
+          max-width: min(320px, 50%);
+        }
+      }
+
+      img {
+        max-width: 100%;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      main p {
+        margin: 1rem 0 0;
+      }
+
+      a {
+        color: LinkText;
+        color: var(--swatch-interactive);
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        min-width: 48px;
+        margin-top: calc((1em - 48px) / 2);
+        margin-bottom: calc((1em - 48px) / 2);
+      }
+
+      a:hover {
+        text-decoration: none;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        white-space: nowrap;
+        clip: rect(0 0 0 0);
+        margin: -1px;
+        border: 0;
+        padding: 0;
+        user-select: none;
+      }
+
+      h1,
+      h2 {
+        font-weight: 400;
+        line-height: inherit;
+        margin: 0;
+      }
+
+      .h1 {
+        display: flex;
+        flex-direction: column;
+        align-content: stretch;
+        justify-self: flex-start;
+        row-gap: 0.5rem;
+        column-gap: 1rem;
+        width: 100%;
+        letter-spacing: -0.05rem;
+        hyphens: none;
+        word-wrap: initial;
+        overflow-wrap: initial;
+      }
+
+      .h1-name {
+        font-size: 2.4rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      @media screen and (max-width: 320px) {
+        .h1-name {
+          font-size: 1.5rem;
+        }
+      }
+
+      .h1-title {
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        line-height: 1.25;
+        font-size: 1.5rem;
+      }
+
+      @media screen and (max-width: 320px) {
+        .h1-title {
+          font-size: 1rem;
+        }
+      }
+
+      @media print {
+        body:has(.projects) .h1 {
+          text-align: right;
+        }
+
+        body:has(.projects) .h1-name {
+          font-size: 1.6rem;
+        }
+
+        body:has(.projects) .h1-title {
+          letter-spacing: 0;
+          font-size: 1.4rem;
+          text-transform: none;
+        }
+
+        body:has(.projects) h1.visually-hidden {
+          position: relative;
+          clip: none;
+          margin: 0 0 var(--gap);
+          text-align: center;
+          width: 100%;
+          height: auto;
+        }
+      }
+
+      h2 {
+        line-height: 1;
+        letter-spacing: -0.025rem;
+        font-size: 1.6rem;
+        border-bottom: 0.1rem solid;
+        page-break-after: avoid;
+        padding-bottom: 0.5rem;
+      }
+
+      @media print, screen and (forced-colors: active) {
+        h2 {
+          font-weight: bold;
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+      }
+
+      h3 {
+        font-size: 1rem;
+        page-break-after: avoid;
+      }
+
+      @media print {
+        h3 {
+          color: var(--swatch-gray);
+        }
+      }
+
+      hr {
+        margin: 2rem 0;
+        border: 0;
+        border-top: 0.1rem solid currentColor;
+      }
+
+      .card {
+        page-break-inside: avoid;
+        margin: 1rem 0;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0.1rem 0.1rem 0.1rem rgba(0, 0, 0, 0.25);
+        background-color: var(--swatch-button-face);
+        display: block;
+        border: 2px solid var(--swatch-page);
+      }
+
+      @media print, screen and (forced-colors: active) {
+        .card {
+          padding: 1rem 0 2rem;
+          border-radius: 0;
+          box-shadow: none;
+          border: 0;
+          border-bottom: 0.1rem solid var(--swatch-text);
+        }
+      }
+
+      @media screen and (max-width: 320px) {
+        .card {
+          padding: 0 0 1rem;
+          background: none;
+          border-radius: 0;
+          box-shadow: none;
+          border-bottom: 0.1rem solid var(--swatch-text);
+        }
+      }
+
+      .card__header {
+        display: flex;
+        column-gap: 1rem;
+        flex-wrap: wrap;
+
+        @media screen and (max-width: 767px) {
+          flex-direction: column;
+        }
+      }
+
+      h3 {
+        font-size: inherit;
+        font-weight: bold;
+        display: flex;
+        gap: 8px;
+        margin: 0;
+        page-break-after: avoid;
+        hyphens: none;
+        word-wrap: initial;
+        overflow-wrap: initial;
+      }
+
+      .card__heading {
+        flex: 1 1 auto;
+      }
+
+      .detail {
+        margin: 0;
+        font-size: 0.875em;
+      }
+
+      .dates {
+        padding: 0;
+        margin: 0;
+        font-size: 0.75em;
+        padding-top: calc((32 / 15) * 2 * 1px);
+        grid-column: 2 / 3;
+        grid-row: 1 / 3;
+        flex: 0 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: end;
+
+        @media (max-width: 767px) {
+          justify-content: start;
+        }
+      }
+
+      .dates time {
+        flex: 0 0 auto;
+      }
+
+      .pre {
+        white-space: pre;
+      }
+
+      .card p {
+        font-size: 0.875em;
+      }
+
+      @media print, screen and (forced-colors: active) {
+        li:last-of-type,
+        section > .card {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+      }
+
+      figure img {
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+
+      figcaption {
+        font-size: 0.875rem;
+      }
+
+      @media print {
+        figure img {
+          max-height: 3.75in;
+        }
+      }
+
+      .no-bullet {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      ol ul {
+        list-style: disc;
+        margin-left: 0;
+        padding-left: 0;
+        margin-top: 1em;
+      }
+
+      ol ul li {
+        margin: 0.25em 1em;
+        font-size: 0.875em;
+      }
+
+      main {
+        display: grid;
+        gap: var(--gap);
+      }
+
+      .container {
+        background: Canvas;
+        background: var(--swatch-background);
+        width: 100%;
+        display: grid;
+        gap: var(--gap);
+        justify-self: center;
+        box-shadow: 0 0 2rem rgba(0, 0, 0, 0.125);
+        grid-template-columns: 100%;
+        max-width: min(calc(100% - 2rem), 860px);
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      @media print, screen and (forced-colors: active) {
+        .container {
+          box-shadow: none;
+        }
+      }
+
+      @media screen and (max-width: 767px) {
+        .container {
+          -webkit-hyphens: auto;
+          hyphens: auto;
+          max-width: 100%;
+          background: none;
+        }
+      }
+
+      @media screen and (min-width: 768px) {
+        .container {
+          border-radius: 1rem;
+          margin: 1rem auto var(--gap);
+          padding: 4rem;
+          border: 2px solid var(--swatch-button-face);
+        }
+      }
+
+      @media screen and (min-width: 1400px) {
+        .container {
+          margin-top: 4rem;
+          max-width: min(calc(100% - 2rem), 960px);
+        }
+      }
+
+      @media print,
+        screen and (forced-colors: active),
+        screen and (prefers-contrast: more) {
+        .container {
+          margin-top: 0;
+        }
+      }
+
+      section {
+        display: grid;
+      }
+
+      @media print, screen and (forced-colors: active) {
+        section,
+        .projects article {
+          border-bottom: 0.5rem double currentColor;
+          padding-bottom: calc(var(--gap) - 1rem);
+        }
+      }
+
+      .projects {
+        display: grid;
+        gap: var(--gap);
+      }
+
+      .avatar {
+        border-radius: 50%;
+      }
+
+      @media print {
+        .avatar {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <nav class="nav">
+        <div class="nav-region">
+          <a
+            href="/cdn-cgi/l/email-protection#88e5e1ebe0e9ede4c8f8fdebe3edfcfca6ebe7e6fce9ebfc"
+            >Email</a
+          ><a href="https://www.linkedin.com/in/michaelcpuckett" target="_blank"
+            >LinkedIn</a
+          ><a href="https://www.github.com/michaelcpuckett" target="_blank"
+            >Github</a
+          >
+        </div>
+        <div class="nav-region">
+          <a href="michael_puckett_resume.pdf" target="_blank">Résumé</a>
+        </div>
+      </nav>
+      <header>
+        <h1 class="h1">
+          <span class="h1-name">Michael Puckett</span
+          ><span class="h1-title">UX Engineer</span>
+        </h1>
+        <p>
+          Creative technologist with extensive experience building for the web
+          platform. Focused on crafting accessible, user-friendly digital
+          products and tools.
+        </p>
+      </header>
+      <main>
+        <section aria-labelledby="section-header-skills">
+          <h2 id="section-header-skills">Skills</h2>
+          <ul
+            role="list"
+            class="no-bullet"
+            aria-labelledby="section-header-skills"
+          >
+            <li class="card">
+              <h3 id="js-ts">JavaScript/<wbr />TypeScript</h3>
+              <p>
+                I have an advanced understanding of ES/JavaScript, along with
+                TypeScript.
+              </p>
+              <p>
+                I am highly efficient working with React, Lit, Vue, Svelte, and
+                similar reactive MVC frameworks. I also have a solid
+                understanding of the DOM and other native web APIs.
+              </p>
+            </li>
+            <li class="card">
+              <h3 id="a11y">Web Accessibility</h3>
+              <p>
+                I have a deep understanding of the Web Content Accessibility
+                Guidelines (WCAG). I have experience working with screen
+                readers, voice recognition, and other assistive technologies.
+              </p>
+              <p>
+                I have worked on websites subject to legal action on the grounds
+                of inaccessibility. The code I wrote needed to pass internal
+                standards and external audits.
+              </p>
+              <p>
+                I am a strong advocate for accessibility and I believe that any
+                set of accessibility guidelines stems from a universal right to
+                information.
+              </p>
+            </li>
+            <li class="card">
+              <h3 id="design-systems">Design System Engineering</h3>
+              <p>
+                I have experience building and maintaining design systems for
+                large organizations. I have worked with designers to create
+                reusable components that are accessible and easy to use.
+              </p>
+              <p>
+                My educational background in graphic design allows me to
+                collaborate closely with designers and translate their intent
+                into code.
+              </p>
+            </li>
+          </ul>
+        </section>
+        <section aria-labelledby="section-header-experience">
+          <h2 id="section-header-experience">Experience</h2>
+          <ol
+            role="list"
+            class="no-bullet"
+            aria-labelledby="section-header-experience"
+          >
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="both-and-yes">Both&amp;Yes</h3>
+                  <p class="detail">UX Engineer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="April 2024">April 2024</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="Present">Present</time>
+                </div>
+              </div>
+              <ul aria-labelledby="both-and-yes">
+                <li>
+                  Building client websites and internal tools, primarily using
+                  TypeScript and React/Next.js.
+                </li>
+                <li>Exploring AI solutions for clients.</li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="google">Google</h3>
+                  <p class="detail">UX Engineer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="May 2021">May 2021</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="December 2023">December 2023</time>
+                </div>
+              </div>
+              <ul aria-labelledby="google">
+                <li>
+                  Developed production web interfaces with clean, efficient, and
+                  maintainable TypeScript code, optimizing for performance and
+                  scalability.
+                </li>
+                <li>
+                  Subject Matter Expert (SME) for accessibility compliance,
+                  championing inclusive design principles and ensuring that UIs
+                  met or exceeded WCAG standards.
+                </li>
+                <li>
+                  Played a pivotal role in multiple successful launches,
+                  including the belonging.google domain, the pride.google
+                  domain, and the annual Year in Search experience.
+                </li>
+                <li>
+                  Architected coding scaffolds to simplify the creation of new
+                  projects.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="liveschool">LiveSchool</h3>
+                  <p class="detail">UI Architect</p>
+                </div>
+                <div class="dates">
+                  <time datetime="August 2018">August 2018</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="May 2021">May 2021</time>
+                </div>
+              </div>
+              <ul aria-labelledby="liveschool">
+                <li>
+                  Leveraged Vue 2 to build features for LiveSchool&#x27;s suite
+                  of web applications and web-based mobile apps, ensuring a
+                  seamless user experience across platforms.
+                </li>
+                <li>
+                  Utilized Firebase for authentication and real-time changes
+                  that reflected immediately across open tabs and devices.
+                </li>
+                <li>
+                  Collaborated closely with designers and stakeholders to craft
+                  architectural artifacts, including detailed documentation,
+                  diagrams, and timelines, ensuring alignment with project goals
+                  and requirements.
+                </li>
+                <li>
+                  Debugged existing performance issues and implemented
+                  performance-friendly components, including an infinite scroll
+                  view that recycled DOM elements.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="humana">Humana</h3>
+                  <p class="detail">Web Developer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="December 2016">December 2016</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="July 2018">July 2018</time>
+                </div>
+              </div>
+              <ul aria-labelledby="humana">
+                <li>
+                  Built a library of accessible Vue 2 components for one of the
+                  nation’s largest health insurance companies.
+                </li>
+                <li>
+                  Responsible for evaluating React and other frameworks, leading
+                  to the decision to go with Vue 2.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="apple">Apple</h3>
+                  <p class="detail">UI Engineer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="October 2013">October 2013</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="June 2016">June 2016</time>
+                </div>
+              </div>
+              <ul aria-labelledby="apple">
+                <li>
+                  Built interfaces to support product launches and transactions
+                  on Apple.com.
+                </li>
+                <li>
+                  Led a successful project to harmonize competing corporate
+                  design systems and implemented a unified SCSS library.
+                </li>
+                <li>
+                  Prepared coding guidelines for use by large engineering teams.
+                </li>
+                <li>
+                  Directed offshore teams to implement core tools and libraries.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="cnn">CNN</h3>
+                  <p class="detail">Web Developer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="April 2013">April 2013</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="October 2013">October 2013</time>
+                </div>
+              </div>
+              <ul aria-labelledby="cnn">
+                <li>
+                  Helped to re-platform CNN.com from Java to Node.js, improving
+                  feature velocity and resulting in more ergonomic and
+                  maintainable code.
+                </li>
+                <li>
+                  Created a responsive SCSS library for many possible page
+                  layouts.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="iostudio">iostudio</h3>
+                  <p class="detail">Web Developer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="January 2012">January 2012</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="March 2013">March 2013</time>
+                </div>
+              </div>
+              <ul aria-labelledby="iostudio">
+                <li>
+                  Built client marketing websites and web apps for clients in an
+                  advertising agency environment.
+                </li>
+                <li>
+                  Implemented the first responsive redesign of
+                  NationalGuard.com.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="fruit">Fruit of the Loom</h3>
+                  <p class="detail">Web Developer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="October 2011">October 2011</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="January 2012">January 2012</time>
+                </div>
+              </div>
+              <ul aria-labelledby="fruit">
+                <li>Designed and developed a relaunch of Jerzees.com.</li>
+                <li>
+                  Helped maintain all Fruit of the Loom websites, including
+                  Fruit.com.
+                </li>
+              </ul>
+            </li>
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="communication-components">
+                    Communication Components
+                  </h3>
+                  <p class="detail">Web Developer</p>
+                </div>
+                <div class="dates">
+                  <time datetime="March 2010">March 2010</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="October 2011">October 2011</time>
+                </div>
+              </div>
+              <ul aria-labelledby="communication-components">
+                <li>
+                  Helped build a web app that generated print marketing
+                  materials for small businesses, using JavaScript and XML
+                  technologies.
+                </li>
+              </ul>
+            </li>
+          </ol>
+        </section>
+        <section aria-labelledby="section-header-education">
+          <h2 id="section-header-education">Education</h2>
+          <ol
+            role="list"
+            class="no-bullet"
+            aria-labelledby="section-header-education"
+          >
+            <li class="card">
+              <div class="card__header">
+                <div class="card__heading">
+                  <h3 id="wku">Western Kentucky University</h3>
+                  <p class="detail">
+                    Bachelor of Arts, Interactive Advertising &amp; Graphic
+                    Design
+                  </p>
+                </div>
+                <div class="dates">
+                  <time datetime="2005">2005</time
+                  ><span class="pre" aria-hidden="true">
+                    <!-- -->-<!-- --> </span
+                  ><span class="visually-hidden">through</span
+                  ><time datetime="2009">2009</time>
+                </div>
+              </div>
+              <ul aria-labelledby="wku">
+                <li>
+                  Interned at Imagewest, WKU&#x27;s design studio, as a web
+                  developer.
+                </li>
+                <li>
+                  Interned for the municipal website for the City of Bowling
+                  Green, as a web developer.
+                </li>
+                <li>
+                  Interned at the College Heights Herald, WKU&#x27;s newspaper,
+                  as a print designer.
+                </li>
+                <li>
+                  Coursework included Digital Illustration, Motion Graphics,
+                  Typography, Creative Strategy, Journalism, Copywriting, and
+                  PR.
+                </li>
+                <li>Graduated Summa Cum Laude (3.9 GPA).</li>
+              </ul>
+            </li>
+          </ol>
+        </section>
+      </main>
+    </div>
+    <script
+      data-cfasync="false"
+      src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
+    ></script>
+  </body>
+</html>
