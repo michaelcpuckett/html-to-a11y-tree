@@ -12,7 +12,7 @@ export const ariaToHtmlMapping = {
   form: ["form"],
   heading: ["h1", "h2", "h3", "h4", "h5", "h6"],
   img: ["img"],
-  link: ["a"],
+  link: ["a[href]"],
   list: ["ul", "ol", "menu"],
   listbox: ["select[multiple]"],
   listitem: ["li"],

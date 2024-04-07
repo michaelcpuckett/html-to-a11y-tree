@@ -14,7 +14,7 @@ import { ariaRolesWithPresentationalChildren } from "./ariaRolesWithPresentation
 import { ariaRolesWithoutAriaLabelSupport } from "./ariaRolesWithoutAriaLabelSupport";
 import { groupingRoles, landmarkRoles } from "./landmarkRoles";
 
-const specialAttributes = ["type", "scope", "multiple"];
+const specialAttributes = ["type", "href", "scope", "multiple"];
 
 interface LabelledByReference {
   type: "aria-labelledby";
@@ -113,18 +113,16 @@ class AccElement implements IAccElement {
       return role;
     }
 
-    if (this.attributes.type) {
-      for (const specialAttribute of specialAttributes) {
-        if (this.attributes[specialAttribute] === undefined) {
-          continue;
-        }
+    for (const specialAttribute of specialAttributes) {
+      if (this.attributes[specialAttribute] === undefined) {
+        continue;
+      }
 
-        const typedTagName = `${this.tagName}[${specialAttribute}=${this.attributes[specialAttribute]}]`;
-        const roleByType = this.getRoleFromString(typedTagName);
+      const typedTagName = `${this.tagName}[${specialAttribute}=${this.attributes[specialAttribute]}]`;
+      const roleByType = this.getRoleFromString(typedTagName);
 
-        if (guardIsRole(roleByType)) {
-          return roleByType;
-        }
+      if (guardIsRole(roleByType)) {
+        return roleByType;
       }
     }
 
@@ -281,42 +279,6 @@ function filterOutEmptyRoleNodesFromTree(node: IAccNode[]): IAccNode[] {
     .map(assertIsAccNode);
 }
 
-function joinAdjacentTextNodes(nodes: IAccNode[]): IAccNode[] {
-  return nodes
-    .reduce((accumulator, node, index, array) => {
-      if (guardIsAccText(node)) {
-        const previousNode = array[index - 1];
-
-        if (guardIsAccText(previousNode)) {
-          accumulator.splice(
-            accumulator.indexOf(previousNode),
-            1,
-            new AccText(`${previousNode.data} ${node.data}`)
-          );
-
-          return accumulator;
-        } else {
-          accumulator.push(node);
-          return accumulator;
-        }
-      }
-
-      if (guardIsAccElement(node)) {
-        accumulator.push(
-          new AccElement(
-            node.tagName,
-            node.attributes,
-            joinAdjacentTextNodes(node.children)
-          )
-        );
-        return accumulator;
-      }
-
-      throw new Error("Unknown node type");
-    }, [] as IAccNode[])
-    .filter(guardIsAccNode);
-}
-
 function flattenNodes(nodes: IAccNode[]): IAccNode[] {
   return nodes.reduce((accumulator, node) => {
     if (guardIsAccElement(node)) {
@@ -433,11 +395,7 @@ async function run() {
   const filteredAccDocument = filterOutEmptyRoleNodesFromTree(accDocument)
     .filter(guardIsAccElement)
     .map((node) => {
-      return new AccElement(
-        node.tagName,
-        node.attributes,
-        joinAdjacentTextNodes(node.children)
-      );
+      return new AccElement(node.tagName, node.attributes, node.children);
     });
 
   fs.writeFileSync(
@@ -451,6 +409,8 @@ async function run() {
     path.resolve("./results/", `${new URL(url).hostname}.acc.md`),
     markdown
   );
+
+  console.log(markdown);
 }
 
 run();
