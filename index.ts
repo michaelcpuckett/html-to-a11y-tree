@@ -1,5 +1,6 @@
 import process from "process";
 import fs from "fs";
+import path from "path";
 import parseFromString from "html-dom-parser";
 import type {
   DOMNode as ParserNode,
@@ -11,8 +12,14 @@ import { ariaToHtmlMapping } from "./ariaToHtmlMapping";
 import { ariaRolesWithPhrasingDescendants } from "./ariaRolesWithPhrasingDescendants";
 import { ariaRolesWithPresentationalChildren } from "./ariaRolesWithPresentationalChildren";
 import { ariaRolesWithoutAriaLabelSupport } from "./ariaRolesWithoutAriaLabelSupport";
+import { groupingRoles, landmarkRoles } from "./landmarkRoles";
 
 const specialAttributes = ["type", "scope", "multiple"];
+
+interface LabelledByReference {
+  type: "aria-labelledby";
+  value: string;
+}
 
 function guardIsRole(value: unknown): value is keyof typeof ariaToHtmlMapping {
   return (
@@ -47,7 +54,7 @@ interface IAccElement {
   children: IAccNode[];
   tagName: string;
   role: string;
-  accName: string;
+  accName: string | LabelledByReference;
   type: "AccElement";
 }
 
@@ -67,7 +74,7 @@ class AccElement implements IAccElement {
   attributes: Record<string, string>;
   children: IAccNode[];
   tagName: string;
-  accName: string;
+  accName: string | LabelledByReference;
   role: string;
   type: "AccElement";
 
@@ -124,7 +131,7 @@ class AccElement implements IAccElement {
     return "generic";
   }
 
-  getAccessibleName(): string {
+  getAccessibleName(): string | LabelledByReference {
     if (!ariaRolesWithoutAriaLabelSupport.includes(this.role)) {
       const label = this.attributes["aria-label"];
 
@@ -133,6 +140,13 @@ class AccElement implements IAccElement {
       }
 
       const labelledBy = this.attributes["aria-labelledby"];
+
+      if (labelledBy) {
+        return {
+          type: "aria-labelledby",
+          value: labelledBy,
+        };
+      }
 
       // TODO. Implement aria-labelledby support by looking up the text of the
       // element with the ID
@@ -190,14 +204,6 @@ const convertParsedNode = (node: ParserNode): IAccNode => {
   throw new Error("Unknown node type");
 };
 
-const [passedHtmlFileName] = process.argv.slice(2);
-
-const htmlFile = fs.readFileSync(passedHtmlFileName, "utf8");
-
-const parsedDocument = parseFromString(htmlFile, {
-  lowerCaseTags: true,
-});
-
 function guardIsAccElement(value: unknown): value is IAccElement {
   return (
     typeof value === "object" &&
@@ -229,7 +235,7 @@ function assertIsAccNode(value: unknown): IAccNode {
 }
 
 function filterOutEmptyRoleNodesFromTree(node: IAccNode[]): IAccNode[] {
-  const withNulls = node.map((node) => {
+  const arrayOfArrays = node.map((node) => {
     if (guardIsAccElement(node)) {
       if (typeof node.attributes.hidden !== "undefined") {
         return [];
@@ -269,40 +275,182 @@ function filterOutEmptyRoleNodesFromTree(node: IAccNode[]): IAccNode[] {
     return [node];
   });
 
-  return withNulls
+  return arrayOfArrays
     .flat(1)
     .filter((node) => node !== null)
     .map(assertIsAccNode);
 }
 
-const accDocument = parsedDocument
-  .filter(filterOutCommentsAndDirectives)
-  .map(convertParsedNode);
+function joinAdjacentTextNodes(nodes: IAccNode[]): IAccNode[] {
+  return nodes
+    .reduce((accumulator, node, index, array) => {
+      if (guardIsAccText(node)) {
+        const previousNode = array[index - 1];
 
-const filteredAccDocument =
-  filterOutEmptyRoleNodesFromTree(accDocument).filter(guardIsAccElement);
+        if (guardIsAccText(previousNode)) {
+          accumulator.splice(
+            accumulator.indexOf(previousNode),
+            1,
+            new AccText(`${previousNode.data} ${node.data}`)
+          );
 
-function render(node: IAccNode, level = 0): string {
-  const indent = (level: number) => "  ".repeat(level);
+          return accumulator;
+        } else {
+          accumulator.push(node);
+          return accumulator;
+        }
+      }
 
-  if (guardIsAccElement(node)) {
-    return (
-      `${indent(level)}[${node.role}${
-        node.accName ? `: ${node.accName}` : ""
-      }]` +
-      "\n" +
-      node.children.map((child) => render(child, level + 1)).join("\n")
-    );
-  }
+      if (guardIsAccElement(node)) {
+        accumulator.push(
+          new AccElement(
+            node.tagName,
+            node.attributes,
+            joinAdjacentTextNodes(node.children)
+          )
+        );
+        return accumulator;
+      }
 
-  if (guardIsAccText(node)) {
-    return `${indent(level)}"${node.data}"`;
-  }
-
-  throw new Error("Unknown node type");
+      throw new Error("Unknown node type");
+    }, [] as IAccNode[])
+    .filter(guardIsAccNode);
 }
 
-fs.writeFileSync(
-  `${passedHtmlFileName}.acc.json`,
-  filteredAccDocument.map(render).join("\n")
-);
+function flattenNodes(nodes: IAccNode[]): IAccNode[] {
+  return nodes.reduce((accumulator, node) => {
+    if (guardIsAccElement(node)) {
+      accumulator.push(node, ...flattenNodes(node.children));
+    } else {
+      accumulator.push(node);
+    }
+
+    return accumulator;
+  }, [] as IAccNode[]);
+}
+
+function renderToMarkdown(nodes: IAccNode[]) {
+  function getLabelledByReferenceText(labelledBy: LabelledByReference): string {
+    const element = flattenNodes(nodes).find((node) => {
+      if (guardIsAccElement(node)) {
+        return node.attributes.id === labelledBy.value;
+      }
+    });
+
+    if (guardIsAccElement(element)) {
+      return element.children
+        .map((child) => {
+          if (guardIsAccText(child)) {
+            return child.data;
+          }
+
+          return "";
+        })
+        .join(" ");
+    }
+
+    return "";
+  }
+
+  function renderNodeToMarkdown(
+    node: IAccNode,
+    level = 0,
+    parentPrefix = ""
+  ): string {
+    const indent = (level: number) => "  ".repeat(level);
+
+    if (guardIsAccElement(node)) {
+      const listItemLevel = node.role === "list" ? level + 1 : level;
+
+      const isLandmarkOrGroup =
+        landmarkRoles.includes(node.role) || groupingRoles.includes(node.role);
+      const accName = node.accName
+        ? typeof node.accName === "string"
+          ? node.accName
+          : getLabelledByReferenceText(node.accName)
+        : node.attributes.title || node.attributes.alt || "";
+
+      const headingLevel = Number(
+        node.role === "heading"
+          ? node.attributes["aria-level"] || node.tagName[1]
+          : 1
+      );
+
+      const listitemPrefix = "-";
+      const headingPrefix = "#".repeat(headingLevel);
+
+      const prefixes: Record<string, string> = {
+        listitem: listitemPrefix,
+        heading: headingPrefix,
+      };
+
+      const prefix = `${prefixes[node.role] ?? ""}`;
+
+      return (
+        (isLandmarkOrGroup
+          ? `${indent(level)}[${node.role}]${
+              accName ? ` "${accName}"` : ""
+            }\n\n`
+          : "") +
+        node.children
+          .map((child) =>
+            renderNodeToMarkdown(
+              child,
+              listItemLevel,
+              `${prefix ? `${prefix} ` : ""}`
+            )
+          )
+          .join("\n\n")
+      );
+    }
+
+    if (guardIsAccText(node)) {
+      return `${indent(level)}${parentPrefix}${node.data}`;
+    }
+
+    throw new Error("Unknown node type");
+  }
+
+  return nodes
+    .map((node) => renderNodeToMarkdown(node))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
+async function run() {
+  const [url] = process.argv.slice(2);
+
+  const htmlFile = await fetch(url).then((response) => response.text());
+
+  const parsedDocument = parseFromString(htmlFile, {
+    lowerCaseTags: true,
+  });
+
+  const accDocument = parsedDocument
+    .filter(filterOutCommentsAndDirectives)
+    .map(convertParsedNode);
+
+  const filteredAccDocument = filterOutEmptyRoleNodesFromTree(accDocument)
+    .filter(guardIsAccElement)
+    .map((node) => {
+      return new AccElement(
+        node.tagName,
+        node.attributes,
+        joinAdjacentTextNodes(node.children)
+      );
+    });
+
+  fs.writeFileSync(
+    path.resolve("./results/", `${new URL(url).hostname}.acc.json`),
+    JSON.stringify(filteredAccDocument, null, 2)
+  );
+
+  const markdown = renderToMarkdown(filteredAccDocument);
+
+  fs.writeFileSync(
+    path.resolve("./results/", `${new URL(url).hostname}.acc.md`),
+    markdown
+  );
+}
+
+run();
