@@ -231,6 +231,10 @@ function assertIsAccNode(value: unknown): IAccNode {
 function filterOutEmptyRoleNodesFromTree(node: IAccNode[]): IAccNode[] {
   const withNulls = node.map((node) => {
     if (guardIsAccElement(node)) {
+      if (typeof node.attributes.hidden !== "undefined") {
+        return [];
+      }
+
       const children = filterOutEmptyRoleNodesFromTree(node.children);
 
       if (

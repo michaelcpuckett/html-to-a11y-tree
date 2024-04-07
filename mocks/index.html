@@ -199,10 +199,6 @@
         text-decoration: none;
       }
 
-      [hidden] {
-        display: none !important;
-      }
-
       .visually-hidden {
         position: absolute;
         width: 1px;
@@ -403,7 +399,8 @@
         flex: 0 0 auto;
       }
 
-      .pre {
+      .dates__through[hidden] {
+        display: inline;
         white-space: pre;
       }
 
@@ -542,9 +539,7 @@
     <div class="container">
       <nav class="nav">
         <div class="nav-region">
-          <a
-            href="/cdn-cgi/l/email-protection#88e5e1ebe0e9ede4c8f8fdebe3edfcfca6ebe7e6fce9ebfc"
-            >Email</a
+          <a href="mailto:michael@puckett.contact">Email</a
           ><a href="https://www.linkedin.com/in/michaelcpuckett" target="_blank"
             >LinkedIn</a
           ><a href="https://www.github.com/michaelcpuckett" target="_blank"
@@ -634,7 +629,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="April 2024">April 2024</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="Present">Present</time>
@@ -656,7 +651,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="May 2021">May 2021</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="December 2023">December 2023</time>
@@ -692,7 +687,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="August 2018">August 2018</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="May 2021">May 2021</time>
@@ -729,7 +724,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="December 2016">December 2016</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="July 2018">July 2018</time>
@@ -754,7 +749,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="October 2013">October 2013</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="June 2016">June 2016</time>
@@ -785,7 +780,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="April 2013">April 2013</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="October 2013">October 2013</time>
@@ -811,7 +806,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="January 2012">January 2012</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="March 2013">March 2013</time>
@@ -836,7 +831,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="October 2011">October 2011</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="January 2012">January 2012</time>
@@ -860,7 +855,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="March 2010">March 2010</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="October 2011">October 2011</time>
@@ -894,7 +889,7 @@
                 </div>
                 <div class="dates">
                   <time datetime="2005">2005</time
-                  ><span class="pre" aria-hidden="true">
+                  ><span class="dates__through" aria-hidden="true" hidden="">
                     <!-- -->-<!-- --> </span
                   ><span class="visually-hidden">through</span
                   ><time datetime="2009">2009</time>
@@ -925,9 +920,5 @@
         </section>
       </main>
     </div>
-    <script
-      data-cfasync="false"
-      src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
-    ></script>
   </body>
 </html>
