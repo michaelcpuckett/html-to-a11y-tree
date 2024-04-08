@@ -12,7 +12,7 @@ import { ariaToHtmlMapping } from "./ariaToHtmlMapping";
 import { ariaRolesWithPhrasingDescendants } from "./ariaRolesWithPhrasingDescendants";
 import { ariaRolesWithPresentationalChildren } from "./ariaRolesWithPresentationalChildren";
 import { ariaRolesWithoutAriaLabelSupport } from "./ariaRolesWithoutAriaLabelSupport";
-import { groupingRoles, landmarkRoles } from "./landmarkRoles";
+import { containerRoles, groupingRoles, landmarkRoles } from "./landmarkRoles";
 
 const specialAttributes = ["type", "href", "scope", "multiple"];
 
@@ -118,7 +118,7 @@ class AccElement implements IAccElement {
         continue;
       }
 
-      const typedTagName = `${this.tagName}[${specialAttribute}=${this.attributes[specialAttribute]}]`;
+      const typedTagName = `${this.tagName}[${specialAttribute}]`;
       const roleByType = this.getRoleFromString(typedTagName);
 
       if (guardIsRole(roleByType)) {
@@ -324,8 +324,9 @@ function renderToMarkdown(nodes: IAccNode[]) {
     if (guardIsAccElement(node)) {
       const listItemLevel = node.role === "list" ? level + 1 : level;
 
-      const isLandmarkOrGroup =
-        landmarkRoles.includes(node.role) || groupingRoles.includes(node.role);
+      const isContainer = containerRoles.includes(node.role);
+      const isLink = node.role === "link";
+
       const accName = node.accName
         ? typeof node.accName === "string"
           ? node.accName
@@ -349,11 +350,12 @@ function renderToMarkdown(nodes: IAccNode[]) {
       const prefix = `${prefixes[node.role] ?? ""}`;
 
       return (
-        (isLandmarkOrGroup
+        (isContainer
           ? `${indent(level)}[${node.role}]${
               accName ? ` "${accName}"` : ""
             }\n\n`
           : "") +
+        (isLink ? `${indent(level)}(link: ${node.attributes.href})\n` : "") +
         node.children
           .map((child) =>
             renderNodeToMarkdown(
