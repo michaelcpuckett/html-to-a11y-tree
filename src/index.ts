@@ -14,7 +14,30 @@ import { ariaRolesWithPresentationalChildren } from "./ariaRolesWithPresentation
 import { ariaRolesWithoutAriaLabelSupport } from "./ariaRolesWithoutAriaLabelSupport";
 import { containerRoles, groupingRoles, landmarkRoles } from "./landmarkRoles";
 
-const specialAttributes = ["type", "href", "scope", "multiple"];
+const specialAttributes = [
+  "type",
+  "type=text",
+  "type=search",
+  "type=radio",
+  "type=checkbox",
+  "type=button",
+  "type=submit",
+  "type=reset",
+  "href",
+  "scope",
+  "multiple",
+];
+
+const relevantAttributes = [
+  "id",
+  "hidden",
+  "tabindex",
+  "title",
+  "alt",
+  "href",
+  "disabled",
+  "inert",
+];
 
 interface LabelledByReference {
   type: "aria-labelledby";
@@ -115,6 +138,14 @@ class AccElement implements IAccElement {
 
     for (const specialAttribute of specialAttributes) {
       if (this.attributes[specialAttribute] === undefined) {
+        const typedTagNameWithoutAttribute = `${this.tagName}:not([${specialAttribute}])`;
+
+        const roleByType = this.getRoleFromString(typedTagNameWithoutAttribute);
+
+        if (guardIsRole(roleByType)) {
+          return roleByType;
+        }
+
         continue;
       }
 
@@ -336,7 +367,7 @@ function renderToMarkdown(nodes: IAccNode[]) {
       const headingLevel = Number(
         node.role === "heading"
           ? node.attributes["aria-level"] || node.tagName[1]
-          : 1
+          : 0
       );
 
       const listitemPrefix = "-";
@@ -381,10 +412,64 @@ function renderToMarkdown(nodes: IAccNode[]) {
     .replace(/\n{3,}/g, "\n\n");
 }
 
-async function run() {
-  const [url] = process.argv.slice(2);
+function renderToJsx(nodes: IAccNode[]) {
+  function renderNodeToJsx(node: IAccNode, level = 0): string {
+    if (guardIsAccElement(node)) {
+      const headingLevel = Number(
+        node.role === "heading"
+          ? node.attributes["aria-level"] || node.tagName[1]
+          : 0
+      );
 
+      const attributes = Object.entries(node.attributes)
+        .filter(
+          ([key]) => key.startsWith("aria-") || relevantAttributes.includes(key)
+        )
+        .map(([key, value]) => `${key}="${value.replace(/"/g, "'")}"`)
+        .filter(Boolean)
+        .join(" ");
+
+      const children = node.children
+        .filter((child) => {
+          if (guardIsAccText(child)) {
+            return child.data.trim().length > 0;
+          }
+
+          return true;
+        })
+        .map((child) => renderNodeToJsx(child, level + 1))
+        .join("\n");
+
+      const componentName = node.role[0].toUpperCase() + node.role.slice(1);
+      const headingLevelAttr = headingLevel
+        ? ` aria-level={${headingLevel}}`
+        : "";
+      const props = attributes ? ` ${attributes}` : "" + headingLevelAttr;
+
+      return `<${componentName}${props}>${children}</${componentName}>`;
+    }
+
+    if (guardIsAccText(node)) {
+      return `${node.data
+        .trim()
+        .replace(/[\u00A0-\u9999<>\&]/g, (i) => "&#" + i.charCodeAt(0) + ";")}`;
+    }
+
+    throw new Error("Unknown node type");
+  }
+
+  return nodes.map((node) => renderNodeToJsx(node)).join("\n");
+}
+
+async function getAccessibilityTree(url: string, debug = false) {
   const htmlFile = await fetch(url).then((response) => response.text());
+
+  if (debug) {
+    fs.writeFileSync(
+      path.resolve("./results/", `${new URL(url).hostname}.html`),
+      htmlFile
+    );
+  }
 
   const parsedDocument = parseFromString(htmlFile, {
     lowerCaseTags: true,
@@ -400,19 +485,63 @@ async function run() {
       return new AccElement(node.tagName, node.attributes, node.children);
     });
 
-  fs.writeFileSync(
-    path.resolve("./results/", `${new URL(url).hostname}.acc.json`),
-    JSON.stringify(filteredAccDocument, null, 2)
-  );
-
-  const markdown = renderToMarkdown(filteredAccDocument);
-
-  fs.writeFileSync(
-    path.resolve("./results/", `${new URL(url).hostname}.acc.md`),
-    markdown
-  );
-
-  console.log(markdown);
+  return filteredAccDocument;
 }
 
-run();
+function isValidFormat(format: string): format is "json" | "jsx" | "md" {
+  return ["json", "jsx", "md"].includes(format);
+}
+
+async function cli() {
+  const [url, format, debug] = process.argv.slice(2);
+
+  if (!url) {
+    throw new Error("Expected URL to be defined");
+  }
+
+  if (!isValidFormat(format)) {
+    throw new Error("Invalid format");
+  }
+
+  const accessibilityTree = await getAccessibilityTree(
+    url,
+    debug === "--debug"
+  );
+
+  if (!accessibilityTree) {
+    throw new Error("Expected result to be defined");
+  }
+
+  if (format === "json") {
+    fs.writeFileSync(
+      path.resolve("./results/", `${new URL(url).hostname}.acc.json`),
+      JSON.stringify(accessibilityTree, null, 2)
+    );
+
+    console.log(JSON.stringify(accessibilityTree, null, 2));
+  }
+
+  if (format === "jsx") {
+    const jsx = renderToJsx(accessibilityTree);
+
+    fs.writeFileSync(
+      path.resolve("./results/", `${new URL(url).hostname}.acc.jsx`),
+      jsx
+    );
+
+    return jsx;
+  }
+
+  if (format === "md") {
+    const markdown = renderToMarkdown(accessibilityTree);
+
+    fs.writeFileSync(
+      path.resolve("./results/", `${new URL(url).hostname}.acc.md`),
+      markdown
+    );
+
+    return markdown;
+  }
+}
+
+cli();

@@ -1,4 +1,4 @@
-export const ariaToHtmlMapping = {
+"use strict";Object.defineProperty(exports, "__esModule", {value: true}); const ariaToHtmlMapping = {
   button: ["button", "summary", "input[type=submit]", "input[type=reset]"],
   caption: ["caption"],
   cell: ["td"],
@@ -39,7 +39,7 @@ export const ariaToHtmlMapping = {
   deletion: ["del"],
   insertion: ["ins"],
   spinbutton: ["input[type=number]"],
-  textbox: ["input[type=text]", "textarea"],
+  textbox: ["input:not([type])", "input[type=text]", "textarea"],
   table: ["table"],
   article: ["article"],
   banner: ["header"],
@@ -69,4 +69,4 @@ export const ariaToHtmlMapping = {
   ],
   presentation: [""],
   media: ["area", "audio", "canvas", "embed", "object", "video"],
-};
+}; exports.ariaToHtmlMapping = ariaToHtmlMapping;

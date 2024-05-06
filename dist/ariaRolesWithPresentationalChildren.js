@@ -1,0 +1,17 @@
+"use strict";Object.defineProperty(exports, "__esModule", {value: true}); const ariaRolesWithPresentationalChildren = [
+  "button",
+  "checkbox",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "meter",
+  "option",
+  "radio",
+  "switch",
+  "tab",
+  "treeitem",
+  "scrollbar",
+  "separator",
+  "slider",
+  "progressbar",
+]; exports.ariaRolesWithPresentationalChildren = ariaRolesWithPresentationalChildren;

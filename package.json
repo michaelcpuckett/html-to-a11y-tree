@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node index.ts https://michaelpuckett.engineer"
+    "start": "ts-node index.ts https://michaelpuckett.engineer",
+    "build": "sucrase --transforms typescript,imports -d dist src"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "ts-node": "^10.9.2"
+    "sucrase": "^3.35.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "html-dom-parser": "^5.0.8"
