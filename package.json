@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node index.ts https://michaelpuckett.engineer",
+    "start": "ts-node index.tsx https://michaelpuckett.engineer",
     "build": "sucrase --transforms typescript,imports -d dist src"
   },
   "author": "",
@@ -16,6 +16,12 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "html-dom-parser": "^5.0.8"
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "html-dom-parser": "^5.0.8",
+    "interweave": "^13.1.0",
+    "interweave-ssr": "^2.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

@@ -1,6 +1,7 @@
 import process from "process";
 import fs from "fs";
 import path from "path";
+import ReactDOMServer from "react-dom/server";
 import parseFromString from "html-dom-parser";
 import type {
   DOMNode as ParserNode,
@@ -37,6 +38,33 @@ const relevantAttributes = [
   "href",
   "disabled",
   "inert",
+  "src",
+  "colspan",
+  "rowspan",
+  "scope",
+  "aria-expanded",
+  "aria-haspopup",
+  "aria-hidden",
+  "aria-describedby",
+  "aria-owns",
+  "aria-controls",
+  "aria-selected",
+  "aria-checked",
+  "aria-disabled",
+  "aria-invalid",
+  "aria-required",
+  "aria-pressed",
+  "aria-orientation",
+  "aria-sort",
+  "aria-autocomplete",
+  "aria-multiline",
+  "aria-readonly",
+  "aria-placeholder",
+  "aria-roledescription",
+  "aria-valuetext",
+  "aria-valuemin",
+  "aria-valuemax",
+  "aria-valuenow",
 ];
 
 interface LabelledByReference {
@@ -461,6 +489,111 @@ function renderToJsx(nodes: IAccNode[]) {
   return nodes.map((node) => renderNodeToJsx(node)).join("\n");
 }
 
+function renderToSimplifiedHtml(nodes: IAccNode[]) {
+  function renderNodeToSimplifiedHtml(node: IAccNode, level = 0): string {
+    if (guardIsAccElement(node)) {
+      const headingLevel = Number(
+        node.role === "heading"
+          ? node.attributes["aria-level"] || node.tagName[1]
+          : 0
+      );
+
+      const attributes = Object.entries(node.attributes)
+        .filter(
+          ([key]) => key.startsWith("aria-") || relevantAttributes.includes(key)
+        )
+        .map(
+          ([key, value]) =>
+            `${key}${value ? `="${value.replace(/"/g, "'")}"` : ""}`
+        )
+        .filter(Boolean);
+
+      const children = node.children
+        .filter((child) => {
+          if (guardIsAccText(child)) {
+            return child.data.trim().length > 0;
+          }
+
+          return true;
+        })
+        .map((child) => renderNodeToSimplifiedHtml(child, level + 1))
+        .join("\n");
+
+      const headingLevelAttr = headingLevel ? `h${headingLevel}` : "";
+
+      let htmlElement = "";
+
+      Object.entries(ariaToHtmlMapping).forEach(([ariaRole, mapping]) => {
+        if (ariaRole === node.role) {
+          htmlElement = mapping[0];
+        }
+      });
+
+      const htmlElementAttributes = htmlElement.split("[");
+      htmlElement = htmlElementAttributes[0];
+
+      if (htmlElement === "h1" && headingLevelAttr) {
+        htmlElement = headingLevelAttr;
+      }
+
+      const extraAttributesString =
+        htmlElementAttributes[1]?.split("]")?.[0] ?? "";
+
+      const extraAttributes = extraAttributesString
+        .split(" ")
+        .map((attribute) => attribute.trim())
+        .filter(Boolean);
+
+      const initialValue: Record<string, string> = {};
+
+      const attributesObject = [...extraAttributes, ...attributes].reduce(
+        (acc, item) => {
+          const [key, value = ""] = item.split("=");
+          acc[key] = value.replace(/"/g, "");
+          return acc;
+        },
+        initialValue
+      );
+
+      const isSelfClosing = ["input", "img", "hr"].includes(htmlElement);
+
+      return `<${htmlElement}${Object.entries(attributesObject)
+        .map(([key, value]) => ` ${key}${value ? `="${value}"` : ""}`)
+        .join(" ")}>${isSelfClosing ? "" : `${children}</${htmlElement}>`}`;
+    }
+
+    if (guardIsAccText(node)) {
+      return `${node.data
+        .trim()
+        .replace(/[\u00A0-\u9999<>\&]/g, (i) => "&#" + i.charCodeAt(0) + ";")}`;
+    }
+
+    throw new Error("Unknown node type");
+  }
+
+  return `<!doctype html>
+    <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Simplified HTML</title>
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          html {
+            font-family: sans-serif;
+            color-scheme: dark;
+          }
+          img {
+            max-width: 100%;
+          }
+        </style>
+      </head>
+      ${nodes.map((node) => renderNodeToSimplifiedHtml(node)).join("\n")}
+    </html>
+  `;
+}
+
 async function getAccessibilityTree(url: string, debug = false) {
   const htmlFile = await fetch(url).then((response) => response.text());
 
@@ -488,8 +621,10 @@ async function getAccessibilityTree(url: string, debug = false) {
   return filteredAccDocument;
 }
 
-function isValidFormat(format: string): format is "json" | "jsx" | "md" {
-  return ["json", "jsx", "md"].includes(format);
+function isValidFormat(
+  format: string
+): format is "json" | "jsx" | "md" | "html" {
+  return ["json", "jsx", "md", "html"].includes(format);
 }
 
 async function cli() {
@@ -530,6 +665,17 @@ async function cli() {
     );
 
     return jsx;
+  }
+
+  if (format === "html") {
+    const html = renderToSimplifiedHtml(accessibilityTree);
+
+    fs.writeFileSync(
+      path.resolve("./results/", `${new URL(url).hostname}.acc.html`),
+      html
+    );
+
+    return html;
   }
 
   if (format === "md") {
